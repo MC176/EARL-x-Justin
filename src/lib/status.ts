@@ -80,6 +80,13 @@ const COMMENT_STATE_META: Record<
     dotClassName: "bg-slate-400",
     tone: "green",
   },
+  todo: {
+    label: "À faire",
+    description: "Action planifiée pour plus tard.",
+    badgeClassName: "border-amber-200 bg-amber-50 text-amber-700",
+    dotClassName: "bg-amber-500",
+    tone: "orange",
+  },
   in_progress: {
     label: "En cours",
     description: "Action en cours sur la parcelle.",
@@ -130,7 +137,10 @@ export function isActiveProblemComment(comment: ParcelComment) {
 }
 
 export function isActiveInProgressComment(comment: ParcelComment) {
-  return comment.action_state === "in_progress" && comment.is_active;
+  return (
+    (comment.action_state === "todo" || comment.action_state === "in_progress") &&
+    comment.is_active
+  );
 }
 
 export function isCompletedComment(comment: ParcelComment) {

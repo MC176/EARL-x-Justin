@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   enrichFeatureCollectionWithOperationalStatus,
   getParcels,
@@ -22,6 +22,7 @@ import { ParcelMap } from "./ParcelMap";
 import { ParcelMapSidebar } from "./ParcelMapSidebar";
 
 export function MapPageClient() {
+  const mapSectionRef = useRef<HTMLDivElement | null>(null);
   const [owner, setOwner] = useState<string>("maxime");
   const [parcels, setParcels] = useState<Parcel[]>([]);
   const [parcelSummaries, setParcelSummaries] = useState<
@@ -124,11 +125,25 @@ export function MapPageClient() {
     [comments, selectedParcelId],
   );
 
+  const focusMapOnMobile = useCallback(() => {
+    if (typeof window === "undefined") return;
+
+    if (!window.matchMedia("(max-width: 1023px)").matches) {
+      return;
+    }
+
+    mapSectionRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }, []);
+
   const handleSelectFromList = useCallback((parcelId: string) => {
     setSelectedParcelId(parcelId);
     setFocusNonce((value) => value + 1);
-    setIsActionPanelOpen(false);
-  }, []);
+    setIsActionPanelOpen(true);
+    focusMapOnMobile();
+  }, [focusMapOnMobile]);
 
   const handleSelectFromMap = useCallback(
     (identifier: string) => {
@@ -144,7 +159,7 @@ export function MapPageClient() {
 
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-      <div className="flex h-[calc(100vh-13rem)] min-h-[560px] flex-col lg:flex-row">
+      <div className="flex min-h-[560px] flex-col lg:h-[calc(100vh-13rem)] lg:flex-row">
         <ParcelMapSidebar
           owner={owner}
           onOwnerChange={setOwner}
@@ -156,7 +171,10 @@ export function MapPageClient() {
           loading={loading}
         />
 
-        <div className="relative min-h-[420px] flex-1 bg-slate-100">
+        <div
+          ref={mapSectionRef}
+          className="relative order-first h-[58vh] min-h-[360px] flex-1 bg-slate-100 lg:order-none lg:h-auto lg:min-h-[420px]"
+        >
           {error ? (
             <div className="absolute left-3 top-3 z-10 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 shadow-sm">
               {error}

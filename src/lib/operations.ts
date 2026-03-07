@@ -110,6 +110,14 @@ function getParcelLabel(parcel?: Parcel | null, fallback?: string | null) {
 function getCommentActivityCopy(comment: ParcelComment) {
   const stateMeta = getCommentStateMeta(comment.action_state);
 
+  if (comment.action_state === "todo") {
+    return {
+      title: `${comment.author_name} a ajouté une action à faire`,
+      severity: stateMeta.tone,
+      stateLabel: stateMeta.label,
+    };
+  }
+
   if (comment.action_state === "in_progress") {
     return {
       title: `${comment.author_name} a signalé une action en cours`,
@@ -182,7 +190,7 @@ function mapActivityLogToFeed(
         ? item.metadata.report_status
         : null;
     const stateLabel =
-      actionState && ["note", "in_progress", "done", "problem"].includes(actionState)
+      actionState && ["note", "todo", "in_progress", "done", "problem"].includes(actionState)
         ? getCommentStateMeta(actionState as ParcelComment["action_state"]).label
         : reportStatus && ["in_progress", "done", "problem"].includes(reportStatus)
           ? getReportStatusMeta(reportStatus as ParcelReport["status"]).label

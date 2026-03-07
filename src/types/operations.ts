@@ -3,6 +3,7 @@ import type { Parcel } from "@/types/parcel";
 export type ActivitySeverity = "blue" | "green" | "orange" | "red" | "slate";
 export type CommentActionState =
   | "note"
+  | "todo"
   | "in_progress"
   | "done"
   | "problem";
@@ -240,6 +241,11 @@ export const COMMENT_ACTION_STATE_OPTIONS: Array<{
     value: "note",
     label: "Commentaire simple",
     description: "Information libre sans impact persistant sur le statut.",
+  },
+  {
+    value: "todo",
+    label: "À faire",
+    description: "Action prévue plus tard, à suivre jusqu'à clôture.",
   },
   {
     value: "in_progress",

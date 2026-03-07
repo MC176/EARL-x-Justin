@@ -48,8 +48,11 @@ export function AddPageClient({
         (comment) =>
           comment.parcel_id === selectedParcelId &&
           comment.is_active &&
-          (comment.action_state === "in_progress" ||
-            comment.action_state === "problem"),
+          (
+            comment.action_state === "todo" ||
+            comment.action_state === "in_progress" ||
+            comment.action_state === "problem"
+          ),
       ),
     [comments, selectedParcelId],
   );
@@ -113,7 +116,7 @@ export function AddPageClient({
               parcelId={selectedParcel.parcel_id}
               parcelLabel={selectedParcel.name || selectedParcel.idu}
               defaultState="note"
-              allowedStates={["note", "in_progress", "done", "problem"]}
+              allowedStates={["note", "todo", "in_progress", "done", "problem"]}
               activeClosableComments={activeClosableComments}
             />
           ) : null}

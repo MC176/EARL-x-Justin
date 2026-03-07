@@ -30,7 +30,7 @@ export function CommentForm({
   parcelId,
   parcelLabel,
   variant = "full",
-  allowedStates = ["note", "in_progress", "done", "problem"],
+  allowedStates = ["note", "todo", "in_progress", "done", "problem"],
   defaultState = "note",
   activeClosableComments = [],
   title,
@@ -210,7 +210,7 @@ export function CommentForm({
           rows={isCompact ? 3 : 4}
           placeholder={
             isCompact
-              ? "Action à suivre, point terminé ou problème constaté..."
+              ? "Action à faire plus tard, action en cours, point terminé ou problème..."
               : "Remarque terrain, observation, point de vigilance..."
           }
           className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 outline-none transition focus:border-slate-400"

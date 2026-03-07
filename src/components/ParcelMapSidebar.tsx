@@ -42,7 +42,7 @@ export function ParcelMapSidebar({
     : null;
 
   return (
-    <aside className="flex h-full w-full shrink-0 flex-col border-b border-slate-200 bg-white lg:w-[320px] lg:border-b-0 lg:border-r">
+    <aside className="flex w-full shrink-0 flex-col border-t border-slate-200 bg-white lg:h-full lg:w-[320px] lg:border-t-0 lg:border-r lg:border-b-0">
       <div className="border-b border-slate-200 p-4">
         <h2 className="text-sm font-semibold text-slate-900">
           Parcelles par exploitant
@@ -67,7 +67,7 @@ export function ParcelMapSidebar({
         </select>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto lg:max-h-full">
         {loading ? (
           <div className="px-4 py-6 text-sm text-slate-500">Chargement...</div>
         ) : null}

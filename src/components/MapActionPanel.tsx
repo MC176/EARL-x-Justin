@@ -27,7 +27,11 @@ export function MapActionPanel({
   const activeClosableComments = comments.filter(
     (comment) =>
       comment.is_active &&
-      (comment.action_state === "in_progress" || comment.action_state === "problem"),
+      (
+        comment.action_state === "todo" ||
+        comment.action_state === "in_progress" ||
+        comment.action_state === "problem"
+      ),
   );
 
   return (
@@ -116,11 +120,11 @@ export function MapActionPanel({
         parcelId={parcel.parcel_id}
         parcelLabel={parcel.name || parcel.idu}
         variant="compact"
-        allowedStates={["in_progress", "done", "problem"]}
+        allowedStates={["todo", "in_progress", "done", "problem"]}
         defaultState="in_progress"
         activeClosableComments={activeClosableComments}
         title="Ajouter une action"
-        description="Depuis la carte: en cours, terminé ou signaler un problème."
+        description="Depuis la carte: à faire, en cours, terminé ou signaler un problème."
         submitLabel="Enregistrer"
         onSaved={onSaved}
       />

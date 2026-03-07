@@ -31,7 +31,11 @@ export default async function ParcelDetailPage({
   const activeClosableComments = comments.filter(
     (comment) =>
       comment.is_active &&
-      (comment.action_state === "in_progress" || comment.action_state === "problem"),
+      (
+        comment.action_state === "todo" ||
+        comment.action_state === "in_progress" ||
+        comment.action_state === "problem"
+      ),
   );
 
   return (
