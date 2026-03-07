@@ -15,6 +15,20 @@ interface ReportingFormProps {
   reports: ParcelReport[];
 }
 
+type ReportingFormState = {
+  parcelId: string;
+  reportType: (typeof REPORT_TYPE_OPTIONS)[number];
+  status: ReportStatus;
+  date: string;
+  startTime: string;
+  endTime: string;
+  authorName: string;
+  authorCode: string;
+  closesReportId: string;
+  summary: string;
+  details: string;
+};
+
 const now = new Date();
 const DEFAULT_DATE = now.toISOString().slice(0, 10);
 const DEFAULT_TIME = `${String(now.getHours()).padStart(2, "0")}:${String(
@@ -30,7 +44,7 @@ export function ReportingForm({
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<ReportingFormState>({
     parcelId: initialParcelId ?? parcels[0]?.parcel_id ?? "",
     reportType: REPORT_TYPE_OPTIONS[0],
     status: "in_progress" as ReportStatus,
@@ -160,7 +174,10 @@ export function ReportingForm({
           <select
             value={form.reportType}
             onChange={(event) =>
-              setForm((current) => ({ ...current, reportType: event.target.value }))
+              setForm((current) => ({
+                ...current,
+                reportType: event.target.value as ReportingFormState["reportType"],
+              }))
             }
             className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-400"
           >

@@ -11,6 +11,16 @@ interface InterventionFormProps {
   parcelLabel: string;
 }
 
+type InterventionFormState = {
+  interventionType: (typeof INTERVENTION_TYPE_OPTIONS)[number];
+  date: string;
+  startTime: string;
+  endTime: string;
+  comment: string;
+  authorName: string;
+  authorCode: string;
+};
+
 const now = new Date();
 const DEFAULT_DATE = now.toISOString().slice(0, 10);
 const DEFAULT_TIME = `${String(now.getHours()).padStart(2, "0")}:${String(
@@ -25,7 +35,7 @@ export function InterventionForm({
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<InterventionFormState>({
     interventionType: INTERVENTION_TYPE_OPTIONS[0],
     date: DEFAULT_DATE,
     startTime: DEFAULT_TIME,
@@ -95,7 +105,7 @@ export function InterventionForm({
             onChange={(event) =>
               setForm((current) => ({
                 ...current,
-                interventionType: event.target.value,
+                interventionType: event.target.value as InterventionFormState["interventionType"],
               }))
             }
             className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-400"
