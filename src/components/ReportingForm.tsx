@@ -2,6 +2,8 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/components/AuthProvider";
+import { buildAuthorPayload } from "@/lib/author";
 import { getReportStatusMeta } from "@/lib/status";
 import { supabase } from "@/lib/supabase";
 import { getSupabaseUiErrorMessage } from "@/lib/supabaseErrors";
@@ -22,8 +24,6 @@ type ReportingFormState = {
   date: string;
   startTime: string;
   endTime: string;
-  authorName: string;
-  authorCode: string;
   closesReportId: string;
   summary: string;
   details: string;
@@ -41,6 +41,7 @@ export function ReportingForm({
   reports,
 }: ReportingFormProps) {
   const router = useRouter();
+  const { user, profile, loading } = useAuth();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -51,8 +52,6 @@ export function ReportingForm({
     date: DEFAULT_DATE,
     startTime: DEFAULT_TIME,
     endTime: "",
-    authorName: "",
-    authorCode: "",
     closesReportId: "",
     summary: "",
     details: "",
@@ -79,6 +78,11 @@ export function ReportingForm({
     setError(null);
     setSuccess(null);
 
+    if (!user) {
+      setError("Session utilisateur introuvable. Reconnectez-vous.");
+      return;
+    }
+
     if (!form.parcelId) {
       setError("Sélectionnez une parcelle avant d'enregistrer le reporting.");
       return;
@@ -93,10 +97,13 @@ export function ReportingForm({
       return;
     }
 
+    const author = buildAuthorPayload(user, profile);
+
     const { error: insertError } = await supabase.from("parcel_reports").insert({
       parcel_id: form.parcelId,
-      author_name: form.authorName,
-      author_code: form.authorCode || null,
+      author_id: author.author_id,
+      author_name: author.author_name,
+      author_code: author.author_code,
       report_type: form.reportType,
       status: form.status,
       date: form.date,
@@ -134,13 +141,13 @@ export function ReportingForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs"
+      className="space-y-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-xs"
     >
       <div>
-        <h2 className="text-base font-semibold text-slate-900">
+        <h2 className="text-lg font-semibold text-slate-900">
           Renseigner un reporting
         </h2>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-base text-slate-500">
           Compte-rendu structuré d&apos;une action terrain, plus détaillé qu&apos;un
           commentaire rapide.
         </p>
@@ -148,7 +155,7 @@ export function ReportingForm({
 
       <div className="grid gap-3 md:grid-cols-2">
         <label className="text-sm text-slate-700 md:col-span-2">
-          <span className="mb-1 block">Parcelle</span>
+          <span className="mb-2 block text-base font-medium text-slate-900">Parcelle</span>
           <select
             value={form.parcelId}
             onChange={(event) =>
@@ -158,7 +165,7 @@ export function ReportingForm({
                 closesReportId: "",
               }))
             }
-            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-400"
+            className="min-h-14 w-full rounded-2xl border border-slate-200 bg-white px-4 text-base text-slate-900 outline-none transition focus:border-slate-400"
             required
           >
             {parcels.map((parcel) => (
@@ -170,7 +177,7 @@ export function ReportingForm({
         </label>
 
         <label className="text-sm text-slate-700">
-          <span className="mb-1 block">Type d&apos;action</span>
+          <span className="mb-2 block text-base font-medium text-slate-900">Type d&apos;action</span>
           <select
             value={form.reportType}
             onChange={(event) =>
@@ -179,7 +186,7 @@ export function ReportingForm({
                 reportType: event.target.value as ReportingFormState["reportType"],
               }))
             }
-            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-400"
+            className="min-h-14 w-full rounded-2xl border border-slate-200 bg-white px-4 text-base text-slate-900 outline-none transition focus:border-slate-400"
           >
             {REPORT_TYPE_OPTIONS.map((option) => (
               <option key={option} value={option}>
@@ -190,7 +197,7 @@ export function ReportingForm({
         </label>
 
         <label className="text-sm text-slate-700">
-          <span className="mb-1 block">État</span>
+          <span className="mb-2 block text-base font-medium text-slate-900">État</span>
           <select
             value={form.status}
             onChange={(event) =>
@@ -201,7 +208,7 @@ export function ReportingForm({
                   event.target.value === "done" ? current.closesReportId : "",
               }))
             }
-            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-400"
+            className="min-h-14 w-full rounded-2xl border border-slate-200 bg-white px-4 text-base text-slate-900 outline-none transition focus:border-slate-400"
           >
             {REPORT_STATUS_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
@@ -209,79 +216,63 @@ export function ReportingForm({
               </option>
             ))}
           </select>
-          <span className="mt-1 block text-xs text-slate-500">
+          <span className="mt-2 block text-sm text-slate-500">
             {getReportStatusMeta(form.status).description}
           </span>
         </label>
 
         <label className="text-sm text-slate-700">
-          <span className="mb-1 block">Date</span>
+          <span className="mb-2 block text-base font-medium text-slate-900">Date</span>
           <input
             type="date"
             value={form.date}
             onChange={(event) =>
               setForm((current) => ({ ...current, date: event.target.value }))
             }
-            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-400"
+            className="min-h-14 w-full rounded-2xl border border-slate-200 bg-white px-4 text-base text-slate-900 outline-none transition focus:border-slate-400"
             required
           />
         </label>
 
-        <label className="text-sm text-slate-700">
-          <span className="mb-1 block">Auteur</span>
-          <input
-            type="text"
-            value={form.authorName}
-            onChange={(event) =>
-              setForm((current) => ({ ...current, authorName: event.target.value }))
-            }
-            placeholder="Nom de la personne"
-            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-400"
-            required
-          />
-        </label>
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base text-slate-900">
+          Auteur connecté :{" "}
+          <span className="font-medium">
+            {loading ? "Chargement..." : profile?.display_name ?? user?.email ?? "Utilisateur"}
+          </span>
+        </div>
 
         <label className="text-sm text-slate-700">
-          <span className="mb-1 block">Heure début</span>
+          <span className="mb-2 block text-base font-medium text-slate-900">Heure début</span>
           <input
             type="time"
             value={form.startTime}
             onChange={(event) =>
               setForm((current) => ({ ...current, startTime: event.target.value }))
             }
-            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-400"
+            className="min-h-14 w-full rounded-2xl border border-slate-200 bg-white px-4 text-base text-slate-900 outline-none transition focus:border-slate-400"
           />
         </label>
 
         <label className="text-sm text-slate-700">
-          <span className="mb-1 block">Heure fin</span>
+          <span className="mb-2 block text-base font-medium text-slate-900">Heure fin</span>
           <input
             type="time"
             value={form.endTime}
             onChange={(event) =>
               setForm((current) => ({ ...current, endTime: event.target.value }))
             }
-            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-400"
+            className="min-h-14 w-full rounded-2xl border border-slate-200 bg-white px-4 text-base text-slate-900 outline-none transition focus:border-slate-400"
           />
         </label>
 
-        <label className="text-sm text-slate-700 md:col-span-2">
-          <span className="mb-1 block">Code auteur</span>
-          <input
-            type="text"
-            value={form.authorCode}
-            onChange={(event) =>
-              setForm((current) => ({ ...current, authorCode: event.target.value }))
-            }
-            placeholder="Optionnel"
-            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-400"
-          />
-        </label>
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base text-slate-600 md:col-span-2">
+          L&apos;auteur est automatiquement enregistré à partir de l&apos;utilisateur connecté.
+        </div>
       </div>
 
       {form.status === "done" && activeClosableReports.length > 0 ? (
         <label className="block text-sm text-slate-700">
-          <span className="mb-1 block">Reporting à clôturer</span>
+          <span className="mb-2 block text-base font-medium text-slate-900">Reporting à clôturer</span>
           <select
             value={form.closesReportId}
             onChange={(event) =>
@@ -290,7 +281,7 @@ export function ReportingForm({
                 closesReportId: event.target.value,
               }))
             }
-            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-400"
+            className="min-h-14 w-full rounded-2xl border border-slate-200 bg-white px-4 text-base text-slate-900 outline-none transition focus:border-slate-400"
           >
             <option value="">Sélectionner un reporting actif</option>
             {activeClosableReports.map((report) => (
@@ -303,7 +294,7 @@ export function ReportingForm({
       ) : null}
 
       <label className="block text-sm text-slate-700">
-        <span className="mb-1 block">Résumé</span>
+        <span className="mb-2 block text-base font-medium text-slate-900">Résumé</span>
         <input
           type="text"
           value={form.summary}
@@ -311,13 +302,13 @@ export function ReportingForm({
             setForm((current) => ({ ...current, summary: event.target.value }))
           }
           placeholder="Ex: Désherbage terminé sur la parcelle"
-          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-400"
+          className="min-h-14 w-full rounded-2xl border border-slate-200 bg-white px-4 text-base text-slate-900 outline-none transition focus:border-slate-400"
           required
         />
       </label>
 
       <label className="block text-sm text-slate-700">
-        <span className="mb-1 block">Détail du compte-rendu</span>
+        <span className="mb-2 block text-base font-medium text-slate-900">Détail du compte-rendu</span>
         <textarea
           value={form.details}
           onChange={(event) =>
@@ -325,36 +316,36 @@ export function ReportingForm({
           }
           rows={5}
           placeholder="Ce qui a été fait, observations, contraintes rencontrées, suite à prévoir..."
-          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-400"
+          className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 outline-none transition focus:border-slate-400"
         />
       </label>
 
       {selectedParcel ? (
-        <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-600">
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base text-slate-600">
           Reporting en cours pour <span className="font-medium text-slate-900">{selectedParcel.name || selectedParcel.idu}</span>.
         </div>
       ) : null}
 
       {error ? (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-base text-rose-700">
           {error}
         </div>
       ) : null}
 
       {success ? (
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-base text-emerald-700">
           {success}
         </div>
       ) : null}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-xs text-slate-500">
+        <p className="text-sm text-slate-500">
           Les pièces jointes pourront être branchées ensuite via `attachments`.
         </p>
         <button
           type="submit"
-          disabled={isPending}
-          className="inline-flex items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-xs hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={isPending || loading || !user}
+          className="inline-flex min-h-14 items-center justify-center rounded-full bg-slate-900 px-6 text-base font-semibold text-white shadow-xs hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isPending ? "Enregistrement..." : "Enregistrer le reporting"}
         </button>

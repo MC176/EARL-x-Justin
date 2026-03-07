@@ -12,18 +12,18 @@ export default async function ParcelsPage() {
   ]);
 
   return (
-    <div className="space-y-6">
-      <div>
+    <div className="space-y-5">
+      <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-xs">
         <h1 className="text-2xl font-semibold text-slate-900">Parcelles</h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-base text-slate-500">
           Liste terrain enrichie avec statut métier, statut parcellaire et
           dernier signal utile.
         </p>
-      </div>
+      </section>
 
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
         {parcels.length === 0 ? (
-          <div className="px-4 py-6 text-sm text-slate-500">
+          <div className="px-4 py-6 text-base text-slate-500">
             Aucune parcelle trouvée.
           </div>
         ) : (
@@ -41,16 +41,16 @@ export default async function ParcelsPage() {
                     return (
                       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                         <div className="min-w-0">
-                          <div className="text-sm font-medium text-slate-900">
+                          <div className="text-lg font-medium text-slate-900">
                             {parcel.name || parcel.idu}
                           </div>
-                          <div className="mt-1 text-xs text-slate-600">
+                          <div className="mt-1 text-sm text-slate-600">
                             IDU : {parcel.idu}
                           </div>
-                          <div className="mt-1 text-xs text-slate-600">
+                          <div className="mt-1 text-sm text-slate-600">
                             {parcel.commune} · {parcel.section} {parcel.numero}
                           </div>
-                          <div className="mt-1 text-xs text-slate-600">
+                          <div className="mt-1 text-sm text-slate-600">
                             Cépage : {parcel.grape_variety || "—"} · Surface :{" "}
                             {formatSurface(parcel.area_m2)}
                           </div>
@@ -65,14 +65,14 @@ export default async function ParcelsPage() {
                             />
                           ) : null}
                           <span
-                            className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[11px] font-medium ${agronomicStatus.badgeClassName}`}
+                            className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium ${agronomicStatus.badgeClassName}`}
                           >
                             <span
                               className={`h-2 w-2 rounded-full ${agronomicStatus.dotClassName}`}
                             />
                             {agronomicStatus.label}
                           </span>
-                          <span className="text-xs text-slate-500">
+                          <span className="text-sm text-slate-500">
                             {summary?.last_activity_at
                               ? `Dernière activité : ${formatDateTime(summary.last_activity_at)}`
                               : "Aucune activité récente"}

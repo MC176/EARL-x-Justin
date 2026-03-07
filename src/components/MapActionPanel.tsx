@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { CommentForm } from "@/components/CommentForm";
 import { StatusBadge } from "@/components/StatusBadge";
 import { formatSurface } from "@/lib/format";
@@ -30,13 +31,13 @@ export function MapActionPanel({
   );
 
   return (
-    <div className="absolute inset-x-3 bottom-3 z-20 max-h-[calc(100%-1.5rem)] overflow-y-auto rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-lg backdrop-blur sm:inset-x-auto sm:right-3 sm:top-3 sm:bottom-auto sm:w-[380px]">
+    <div className="absolute inset-x-3 bottom-3 z-20 max-h-[calc(100%-1.5rem)] overflow-y-auto rounded-3xl border border-slate-200 bg-white/95 p-4 shadow-lg backdrop-blur sm:inset-x-auto sm:right-3 sm:top-3 sm:bottom-auto sm:w-[380px]">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="truncate text-base font-semibold text-slate-900">
+          <h3 className="truncate text-lg font-semibold text-slate-900">
             Ajouter une action
           </h3>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-base text-slate-500">
             {parcel.name || parcel.idu} · {parcel.commune}
           </p>
         </div>
@@ -45,13 +46,13 @@ export function MapActionPanel({
           type="button"
           onClick={onClose}
           aria-label="Fermer la fenêtre"
-          className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 hover:text-slate-900"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-xl text-slate-500 transition hover:bg-slate-50 hover:text-slate-900"
         >
           ×
         </button>
       </div>
 
-      <div className="mb-4 space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+      <div className="mb-4 space-y-3 rounded-3xl border border-slate-200 bg-slate-50 p-3">
         <div className="flex flex-wrap gap-2">
           <StatusBadge
             tone={summary.tone}
@@ -59,7 +60,7 @@ export function MapActionPanel({
             title={summary.description}
           />
           <span
-            className={`inline-flex items-center gap-2 rounded-full border px-2 py-0.5 text-[10px] font-medium ${agronomicStatus.badgeClassName}`}
+            className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium ${agronomicStatus.badgeClassName}`}
           >
             <span
               className={`h-2 w-2 rounded-full ${agronomicStatus.dotClassName}`}
@@ -68,7 +69,28 @@ export function MapActionPanel({
           </span>
         </div>
 
-        <dl className="grid grid-cols-2 gap-2 text-xs text-slate-600">
+        <div className="grid grid-cols-3 gap-2">
+          <Link
+            href={`/ajouter?action=intervention&parcel_id=${encodeURIComponent(parcel.parcel_id)}`}
+            className="flex min-h-12 items-center justify-center rounded-2xl bg-white px-3 text-center text-sm font-semibold text-slate-900"
+          >
+            Intervention
+          </Link>
+          <Link
+            href={`/ajouter?action=commentaire&parcel_id=${encodeURIComponent(parcel.parcel_id)}`}
+            className="flex min-h-12 items-center justify-center rounded-2xl bg-white px-3 text-center text-sm font-semibold text-slate-900"
+          >
+            Commentaire
+          </Link>
+          <Link
+            href={`/reporting?parcel_id=${encodeURIComponent(parcel.parcel_id)}`}
+            className="flex min-h-12 items-center justify-center rounded-2xl bg-white px-3 text-center text-sm font-semibold text-slate-900"
+          >
+            Reporting
+          </Link>
+        </div>
+
+        <dl className="grid grid-cols-2 gap-2 text-sm text-slate-600">
           <div>
             <dt className="text-slate-400">Cépage</dt>
             <dd className="mt-1">{parcel.grape_variety || "—"}</dd>
@@ -87,7 +109,7 @@ export function MapActionPanel({
           </div>
         </dl>
 
-        <p className="text-xs text-slate-600">{summary.description}</p>
+        <p className="text-sm text-slate-600">{summary.description}</p>
       </div>
 
       <CommentForm

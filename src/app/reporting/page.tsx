@@ -12,10 +12,10 @@ export default async function ReportingPage({ searchParams }: ReportingPageProps
   const reports = await getReportsByParcelIds(parcels.map((parcel) => parcel.parcel_id));
 
   return (
-    <div className="space-y-6">
-      <div>
+    <div className="space-y-5">
+      <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-xs">
         <h1 className="text-2xl font-semibold text-slate-900">Reporting</h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-base text-slate-500">
           Compte-rendu structuré des actions terrain, connecté au dashboard, au
           journal d&apos;activité et aux fiches parcelles.
         </p>

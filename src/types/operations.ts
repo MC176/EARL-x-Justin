@@ -19,6 +19,7 @@ export type ActivityEventType =
 export interface ParcelIntervention {
   id: string;
   parcel_id: string;
+  author_id: string | null;
   intervention_type: string;
   date: string;
   start_time: string | null;
@@ -34,6 +35,7 @@ export interface ParcelIntervention {
 export interface ParcelComment {
   id: string;
   parcel_id: string;
+  author_id: string | null;
   content: string;
   author_name: string;
   author_code: string | null;
@@ -52,6 +54,7 @@ export interface ActivityLogEntry {
   event_type: ActivityEventType;
   title: string;
   description: string | null;
+  actor_id: string | null;
   actor_name: string | null;
   actor_code: string | null;
   related_intervention_id: string | null;
@@ -102,6 +105,7 @@ export interface ParcelTask {
 export interface ParcelReport {
   id: string;
   parcel_id: string;
+  author_id: string | null;
   author_name: string;
   author_code: string | null;
   report_type: string;

@@ -9,21 +9,20 @@ interface DashboardStatsProps {
 }
 
 export function DashboardStats({ cards }: DashboardStatsProps) {
-
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-6">
+    <div className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-2 sm:px-0 xl:grid-cols-6">
       {cards.map((card) => (
         <div
           key={card.label}
-          className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-xs"
+          className="min-w-[180px] snap-start rounded-3xl border border-slate-200 bg-white px-4 py-4 shadow-xs"
         >
-          <div className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+          <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
             {card.label}
           </div>
-          <div className="mt-2 text-2xl font-semibold text-slate-900">
+          <div className="mt-2 text-3xl font-semibold text-slate-900">
             {card.value}
           </div>
-          <div className="mt-1 text-xs text-slate-500">{card.helper}</div>
+          <div className="mt-2 text-sm text-slate-500">{card.helper}</div>
         </div>
       ))}
     </div>

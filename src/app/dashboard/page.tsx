@@ -18,32 +18,34 @@ export default async function DashboardPage() {
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
-        <div>
-          <h1 className="text-xl font-semibold text-slate-900">
-            Tableau de bord
-          </h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Pilotage opérationnel des parcelles de Maxime, avec activité récente,
-            commentaires, interventions et alertes terrain.
-          </p>
+    <div className="space-y-5">
+      <section className="space-y-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-xs">
+        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+          <div>
+            <h1 className="text-2xl font-semibold text-slate-900">
+              Tableau de bord
+            </h1>
+            <p className="mt-1 text-base text-slate-500">
+              Vue terrain rapide pour suivre les parcelles, alertes et actions du jour.
+            </p>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Link
-            href="/parcels"
-            className="inline-flex items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-xs hover:bg-slate-800"
-          >
-            Voir la liste
-          </Link>
+
+        <div className="grid grid-cols-2 gap-3">
           <Link
             href="/map"
-            className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-800 shadow-xs hover:bg-slate-50"
+            className="inline-flex min-h-14 items-center justify-center rounded-2xl bg-slate-900 px-4 text-base font-semibold text-white shadow-xs hover:bg-slate-800"
           >
             Ouvrir la carte
           </Link>
+          <Link
+            href="/journal"
+            className="inline-flex min-h-14 items-center justify-center rounded-2xl border border-slate-300 bg-white px-4 text-base font-semibold text-slate-800 shadow-xs hover:bg-slate-50"
+          >
+            Voir le journal
+          </Link>
         </div>
-      </div>
+      </section>
 
       <DashboardStats
         cards={[
@@ -80,18 +82,16 @@ export default async function DashboardPage() {
         ]}
       />
 
-      <div className="grid gap-6 xl:grid-cols-[1.6fr_1fr]">
+      <div className="grid gap-5 xl:grid-cols-[1.6fr_1fr]">
         <DashboardRecentActivity items={dashboard.recentActivity} />
         <DashboardAlerts alerts={dashboard.alerts} />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
+      <div className="grid gap-5 lg:grid-cols-3">
+        <section className="space-y-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-xs">
           <div>
-            <h2 className="text-base font-semibold text-slate-900">
-              Alertes
-            </h2>
-            <p className="mt-1 text-sm text-slate-500">
+            <h2 className="text-lg font-semibold text-slate-900">Problèmes</h2>
+            <p className="mt-1 text-base text-slate-500">
               Toutes les parcelles avec problème actif.
             </p>
           </div>
@@ -103,12 +103,10 @@ export default async function DashboardPage() {
           />
         </section>
 
-        <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
+        <section className="space-y-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-xs">
           <div>
-            <h2 className="text-base font-semibold text-slate-900">
-              En cours
-            </h2>
-            <p className="mt-1 text-sm text-slate-500">
+            <h2 className="text-lg font-semibold text-slate-900">En cours</h2>
+            <p className="mt-1 text-base text-slate-500">
               Parcelles ayant une action non clôturée.
             </p>
           </div>
@@ -120,12 +118,12 @@ export default async function DashboardPage() {
           />
         </section>
 
-        <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
+        <section className="space-y-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-xs">
           <div>
-            <h2 className="text-base font-semibold text-slate-900">
+            <h2 className="text-lg font-semibold text-slate-900">
               Derniers reportings
             </h2>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-base text-slate-500">
               Comptes-rendus terrain structurés les plus récents.
             </p>
           </div>
@@ -138,13 +136,13 @@ export default async function DashboardPage() {
         </section>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
+      <div className="grid gap-5 lg:grid-cols-2">
+        <section className="space-y-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-xs">
           <div>
-            <h2 className="text-base font-semibold text-slate-900">
+            <h2 className="text-lg font-semibold text-slate-900">
               Historique récent
             </h2>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-base text-slate-500">
               Qui a commenté, sur quelle parcelle, avec quel état et quand.
             </p>
           </div>
@@ -156,12 +154,12 @@ export default async function DashboardPage() {
           />
         </section>
 
-        <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
+        <section className="space-y-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-xs">
           <div>
-            <h2 className="text-base font-semibold text-slate-900">
+            <h2 className="text-lg font-semibold text-slate-900">
               Synthèse terrain
             </h2>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-base text-slate-500">
               Dernières interventions et clôtures utiles au pilotage.
             </p>
           </div>
@@ -172,7 +170,7 @@ export default async function DashboardPage() {
             emptyMessage="Aucune intervention récente."
           />
 
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-base text-slate-600">
             {dashboard.kpis.actionsCompletedRecently} action
             {dashboard.kpis.actionsCompletedRecently > 1 ? "s" : ""} terminée
             {dashboard.kpis.actionsCompletedRecently > 1 ? "s" : ""} récemment.
