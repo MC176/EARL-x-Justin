@@ -1,0 +1,82 @@
+import { supabase } from "@/lib/supabase";
+import type { Parcel } from "@/types/parcel";
+
+export interface ParcelsGeoJSON {
+  type: "FeatureCollection";
+  features: unknown[];
+  bbox?: [number, number, number, number];
+}
+
+export async function getParcels(params?: {
+  owner?: string;
+}): Promise<Parcel[]> {
+  let query = supabase.from("parcels").select("*");
+
+  if (params?.owner) {
+    query = query.eq("owner_code", params.owner);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    throw new Error(`Erreur Supabase: ${error.message}`);
+  }
+
+  return (data ?? []) as Parcel[];
+}
+
+export async function getParcel(id: string): Promise<Parcel> {
+  const { data, error } = await supabase
+    .from("parcels")
+    .select("*")
+    .eq("parcel_id", id)
+    .single();
+
+  if (error) {
+    throw new Error(`Erreur Supabase: ${error.message}`);
+  }
+
+  if (!data) {
+    throw new Error("Parcelle introuvable");
+  }
+
+  return data as Parcel;
+}
+
+export async function getParcelsGeoJSON(params?: {
+  owner?: string;
+}): Promise<ParcelsGeoJSON> {
+  const owner = params?.owner ?? "maxime";
+
+  const { data, error } = await supabase.rpc("parcels_geojson", { owner });
+
+  if (error) {
+    throw new Error(`Erreur Supabase (parcels_geojson): ${error.message}`);
+  }
+
+  if (!data) {
+    return { type: "FeatureCollection", features: [] };
+  }
+
+  return data as ParcelsGeoJSON;
+}
+
+export function parcelsToFeatureCollection(
+  parcels: Parcel[],
+): ParcelsGeoJSON {
+  const features = parcels
+    .filter((p) => p.geometry && p.geometry.coordinates)
+    .map((p) => ({
+      type: "Feature" as const,
+      geometry: p.geometry!,
+      properties: {
+        parcel_id: p.parcel_id,
+        name: p.name || p.idu,
+        grape_variety: p.grape_variety ?? undefined,
+        status: p.status ?? undefined,
+        owner_code: p.owner_code,
+        owner_name: p.owner_name,
+      },
+    }));
+  return { type: "FeatureCollection", features };
+}
