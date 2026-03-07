@@ -141,7 +141,7 @@ export function MapPageClient() {
   const handleSelectFromList = useCallback((parcelId: string) => {
     setSelectedParcelId(parcelId);
     setFocusNonce((value) => value + 1);
-    setIsActionPanelOpen(true);
+    setIsActionPanelOpen(false);
     focusMapOnMobile();
   }, [focusMapOnMobile]);
 
