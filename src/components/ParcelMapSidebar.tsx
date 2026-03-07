@@ -1,6 +1,11 @@
 "use client";
 
+import Link from "next/link";
+import { StatusBadge } from "@/components/StatusBadge";
+import { formatSurface } from "@/lib/format";
+import { getAgronomicStatusMeta } from "@/lib/status";
 import type { Parcel } from "@/types/parcel";
+import type { ParcelOperationalSummary } from "@/types/operations";
 
 const OWNER_OPTIONS = [
   { value: "", label: "Tous" },
@@ -8,22 +13,12 @@ const OWNER_OPTIONS = [
   { value: "jean-marc", label: "Jean-Marc" },
 ];
 
-const STATUS_LABELS: Record<string, string> = {
-  active: "Active",
-  arachee: "Arrachée",
-  non_plantee: "Non plantée",
-};
-
-const STATUS_STYLES: Record<string, string> = {
-  active: "border-emerald-200 bg-emerald-100 text-emerald-800",
-  arachee: "border-slate-200 bg-slate-100 text-slate-700",
-  non_plantee: "border-amber-200 bg-amber-100 text-amber-800",
-};
-
 interface ParcelMapSidebarProps {
   owner: string;
   onOwnerChange: (owner: string) => void;
   parcels: Parcel[];
+  parcelSummaries: Record<string, ParcelOperationalSummary>;
+  selectedParcel: Parcel | null;
   selectedParcelId: string | null;
   onSelectParcel: (parcelId: string) => void;
   loading?: boolean;
@@ -33,10 +28,19 @@ export function ParcelMapSidebar({
   owner,
   onOwnerChange,
   parcels,
+  parcelSummaries,
+  selectedParcel,
   selectedParcelId,
   onSelectParcel,
   loading = false,
 }: ParcelMapSidebarProps) {
+  const selectedSummary = selectedParcel
+    ? parcelSummaries[selectedParcel.parcel_id]
+    : null;
+  const selectedAgronomicStatus = selectedParcel
+    ? getAgronomicStatusMeta(selectedParcel.status)
+    : null;
+
   return (
     <aside className="flex h-full w-full shrink-0 flex-col border-b border-slate-200 bg-white lg:w-[320px] lg:border-b-0 lg:border-r">
       <div className="border-b border-slate-200 p-4">
@@ -78,6 +82,8 @@ export function ParcelMapSidebar({
           <ul className="divide-y divide-slate-100">
             {parcels.map((parcel) => {
               const isSelected = parcel.parcel_id === selectedParcelId;
+              const summary = parcelSummaries[parcel.parcel_id];
+              const agronomicStatus = getAgronomicStatusMeta(parcel.status);
 
               return (
                 <li key={parcel.parcel_id}>
@@ -107,15 +113,21 @@ export function ParcelMapSidebar({
                         <div className="mt-1 text-xs text-slate-500">
                           {parcel.grape_variety || "Cépage non renseigné"}
                         </div>
+                        {summary ? (
+                          <div className="mt-2">
+                            <StatusBadge
+                              tone={summary.tone}
+                              label={summary.label}
+                              title={summary.description}
+                            />
+                          </div>
+                        ) : null}
                       </div>
 
                       <span
-                        className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium ${
-                          STATUS_STYLES[parcel.status] ??
-                          "border-sky-200 bg-sky-100 text-sky-800"
-                        }`}
+                        className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium ${agronomicStatus.badgeClassName}`}
                       >
-                        {STATUS_LABELS[parcel.status] ?? parcel.status}
+                        {agronomicStatus.label}
                       </span>
                     </div>
                   </button>
@@ -123,6 +135,78 @@ export function ParcelMapSidebar({
               );
             })}
           </ul>
+        ) : null}
+
+        {selectedParcel && selectedSummary && selectedAgronomicStatus ? (
+          <div className="border-t border-slate-200 p-4">
+            <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-900">
+                    {selectedParcel.name || selectedParcel.idu}
+                  </h3>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {selectedParcel.commune} · {selectedParcel.section}{" "}
+                    {selectedParcel.numero}
+                  </p>
+                </div>
+                <Link
+                  href={`/parcels/${encodeURIComponent(selectedParcel.idu)}`}
+                  className="text-xs font-medium text-slate-600 hover:text-slate-900"
+                >
+                  Ouvrir
+                </Link>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <Link
+                  href={`/reporting?parcel_id=${encodeURIComponent(selectedParcel.parcel_id)}`}
+                  className="inline-flex items-center justify-center rounded-full bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-800"
+                >
+                  Faire un compte-rendu
+                </Link>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <StatusBadge
+                  tone={selectedSummary.tone}
+                  label={selectedSummary.label}
+                  title={selectedSummary.description}
+                />
+                <span
+                  className={`inline-flex items-center gap-2 rounded-full border px-2 py-0.5 text-[10px] font-medium ${selectedAgronomicStatus.badgeClassName}`}
+                >
+                  <span
+                    className={`h-2 w-2 rounded-full ${selectedAgronomicStatus.dotClassName}`}
+                  />
+                  {selectedAgronomicStatus.label}
+                </span>
+              </div>
+
+              <dl className="grid grid-cols-2 gap-2 text-xs text-slate-600">
+                <div>
+                  <dt className="text-slate-400">Cépage</dt>
+                  <dd className="mt-1">{selectedParcel.grape_variety || "—"}</dd>
+                </div>
+                <div>
+                  <dt className="text-slate-400">Surface</dt>
+                  <dd className="mt-1">{formatSurface(selectedParcel.area_m2)}</dd>
+                </div>
+                <div>
+                  <dt className="text-slate-400">Problèmes actifs</dt>
+                  <dd className="mt-1">{selectedSummary.active_problems_total}</dd>
+                </div>
+                <div>
+                  <dt className="text-slate-400">Actions en cours</dt>
+                  <dd className="mt-1">
+                    {selectedSummary.active_in_progress_total}
+                  </dd>
+                </div>
+              </dl>
+
+              <p className="text-xs text-slate-600">{selectedSummary.description}</p>
+            </div>
+          </div>
         ) : null}
       </div>
     </aside>

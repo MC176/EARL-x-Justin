@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import type { Parcel } from "@/types/parcel";
+import type { ParcelOperationalSummary } from "@/types/operations";
 
 export interface ParcelsGeoJSON {
   type: "FeatureCollection";
@@ -43,6 +44,24 @@ export async function getParcel(id: string): Promise<Parcel> {
   return data as Parcel;
 }
 
+export async function getParcelByIdu(idu: string): Promise<Parcel | null> {
+  const { data, error } = await supabase
+    .from("parcels")
+    .select("*")
+    .eq("idu", decodeURIComponent(idu))
+    .single();
+
+  if (error) {
+    if (error.code === "PGRST116") {
+      return null;
+    }
+
+    throw new Error(`Erreur Supabase: ${error.message}`);
+  }
+
+  return data as Parcel;
+}
+
 export async function getParcelsGeoJSON(params?: {
   owner?: string;
 }): Promise<ParcelsGeoJSON> {
@@ -79,4 +98,32 @@ export function parcelsToFeatureCollection(
       },
     }));
   return { type: "FeatureCollection", features };
+}
+
+export function enrichFeatureCollectionWithOperationalStatus(
+  featureCollection: ParcelsGeoJSON,
+  summaries: Record<string, ParcelOperationalSummary>,
+): ParcelsGeoJSON {
+  return {
+    ...featureCollection,
+    features: featureCollection.features.map((feature) => {
+      const typedFeature = feature as {
+        type: "Feature";
+        geometry: unknown;
+        properties?: Record<string, unknown>;
+      };
+      const parcelId = typedFeature.properties?.parcel_id as string | undefined;
+      const summary = parcelId ? summaries[parcelId] : undefined;
+
+      return {
+        ...typedFeature,
+        properties: {
+          ...typedFeature.properties,
+          operational_tone: summary?.tone ?? "slate",
+          operational_label: summary?.label ?? "Sans signal",
+          operational_description: summary?.description ?? null,
+        },
+      };
+    }),
+  };
 }

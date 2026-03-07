@@ -15,20 +15,20 @@ export default function MapPage() {
         </div>
         <div className="flex flex-wrap gap-2 text-xs text-slate-600">
           <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2 py-1">
-            <span className="h-2 w-2 rounded-full bg-emerald-500" />
-            Active
+            <span className="h-2 w-2 rounded-full bg-sky-500" />
+            Intervention du jour
           </span>
           <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2 py-1">
-            <span className="h-2 w-2 rounded-full bg-slate-400" />
-            Arrachée
+            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+            Tout OK
           </span>
           <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2 py-1">
             <span className="h-2 w-2 rounded-full bg-amber-500" />
-            Non plantée
+            Actions en attente
           </span>
           <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2 py-1">
-            <span className="h-2 w-2 rounded-full bg-sky-500" />
-            Autre
+            <span className="h-2 w-2 rounded-full bg-rose-500" />
+            Incident / blocage
           </span>
         </div>
       </div>

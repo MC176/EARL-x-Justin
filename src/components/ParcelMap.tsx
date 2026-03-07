@@ -1,7 +1,12 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import maplibregl, { Map } from "maplibre-gl";
+import type { FeatureCollection } from "geojson";
+import maplibregl, {
+  type FilterSpecification,
+  Map,
+  type StyleSpecification,
+} from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { ParcelsGeoJSON } from "@/lib/api";
 import type { Parcel } from "@/types/parcel";
@@ -106,11 +111,12 @@ export function ParcelMap({
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<Map | null>(null);
   const isMountedRef = useRef(true);
-  const featureCollectionRef = useRef(featureCollection);
+  const initialFeatureCollectionRef = useRef(featureCollection);
   const onSelectParcelRef = useRef(onSelectParcel);
 
-  featureCollectionRef.current = featureCollection;
-  onSelectParcelRef.current = onSelectParcel;
+  useEffect(() => {
+    onSelectParcelRef.current = onSelectParcel;
+  }, [onSelectParcel]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -120,7 +126,7 @@ export function ParcelMap({
 
     const map = new maplibregl.Map({
       container,
-      style: OSM_STYLE as any,
+      style: OSM_STYLE as StyleSpecification,
       center: [4.85, 45.75],
       zoom: 8,
     });
@@ -132,7 +138,7 @@ export function ParcelMap({
 
       map.addSource("parcels", {
         type: "geojson",
-        data: featureCollectionRef.current as any,
+        data: initialFeatureCollectionRef.current as FeatureCollection,
       });
 
       map.addLayer({
@@ -142,14 +148,16 @@ export function ParcelMap({
         paint: {
           "fill-color": [
             "match",
-            ["get", "status"],
-            "active",
+            ["get", "operational_tone"],
+            "blue",
+            "#0ea5e9",
+            "green",
             "#22c55e",
-            "arachee",
-            "#9ca3af",
-            "non_plantee",
-            "#f97316",
-            "#3b82f6",
+            "orange",
+            "#f59e0b",
+            "red",
+            "#f43f5e",
+            "#94a3b8",
           ],
           "fill-opacity": 0.6,
         },
@@ -176,7 +184,9 @@ export function ParcelMap({
         },
       });
 
-      const initialBounds = getBoundsFromFeatureCollection(featureCollectionRef.current);
+      const initialBounds = getBoundsFromFeatureCollection(
+        initialFeatureCollectionRef.current,
+      );
       if (initialBounds) {
         map.fitBounds(initialBounds, { padding: 40, maxZoom: 17 });
       }
@@ -192,6 +202,9 @@ export function ParcelMap({
           (feature.properties?.idu as string | undefined);
         const name = feature.properties?.name as string | undefined;
         const status = feature.properties?.status as string | undefined;
+        const operationalLabel = feature.properties?.operational_label as
+          | string
+          | undefined;
 
         if (parcelId && onSelectParcelRef.current) {
           onSelectParcelRef.current(parcelId);
@@ -200,7 +213,7 @@ export function ParcelMap({
         new maplibregl.Popup()
           .setLngLat(event.lngLat)
           .setHTML(
-            `<div style="font-size:12px;"><strong>${name ?? "Parcelle"}</strong><br/>${status ?? ""}</div>`,
+            `<div style="font-size:12px;"><strong>${name ?? "Parcelle"}</strong><br/>${operationalLabel ?? ""}${status ? `<br/>Statut parcellaire: ${status}` : ""}</div>`,
           )
           .addTo(map);
       });
@@ -221,7 +234,7 @@ export function ParcelMap({
     const source = map.getSource("parcels") as maplibregl.GeoJSONSource | undefined;
     if (!source || typeof source.setData !== "function") return;
 
-    source.setData(featureCollection as any);
+    source.setData(featureCollection as FeatureCollection);
   }, [featureCollection]);
 
   useEffect(() => {
@@ -230,17 +243,19 @@ export function ParcelMap({
     if (!map.isStyleLoaded()) return;
 
     if (map.getLayer("parcels-selected")) {
+      const filter: FilterSpecification = selectedParcel
+        ? [
+            "any",
+            ["==", ["get", "parcel_id"], selectedParcel.parcel_id],
+            ["==", ["get", "idu"], selectedParcel.idu],
+          ]
+        : selectedParcelId
+          ? ["==", ["get", "parcel_id"], selectedParcelId]
+          : ["literal", false];
+
       map.setFilter(
         "parcels-selected",
-        selectedParcel
-          ? ([
-              "any",
-              ["==", ["get", "parcel_id"], selectedParcel.parcel_id],
-              ["==", ["get", "idu"], selectedParcel.idu],
-            ] as any)
-          : selectedParcelId
-            ? (["==", ["get", "parcel_id"], selectedParcelId] as any)
-          : (["literal", false] as any),
+        filter,
       );
     }
   }, [selectedParcel, selectedParcelId]);

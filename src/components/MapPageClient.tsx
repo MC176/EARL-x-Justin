@@ -2,23 +2,38 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  enrichFeatureCollectionWithOperationalStatus,
   getParcels,
   getParcelsGeoJSON,
   parcelsToFeatureCollection,
   type ParcelsGeoJSON,
 } from "@/lib/api";
+import {
+  getCommentsByParcelIds,
+  getParcelOperationalSummaries,
+} from "@/lib/operations";
 import type { Parcel } from "@/types/parcel";
+import type {
+  ParcelComment,
+  ParcelOperationalSummary,
+} from "@/types/operations";
+import { MapActionPanel } from "./MapActionPanel";
 import { ParcelMap } from "./ParcelMap";
 import { ParcelMapSidebar } from "./ParcelMapSidebar";
 
 export function MapPageClient() {
   const [owner, setOwner] = useState<string>("maxime");
   const [parcels, setParcels] = useState<Parcel[]>([]);
+  const [parcelSummaries, setParcelSummaries] = useState<
+    Record<string, ParcelOperationalSummary>
+  >({});
+  const [comments, setComments] = useState<ParcelComment[]>([]);
   const [featureCollection, setFeatureCollection] = useState<ParcelsGeoJSON>({
     type: "FeatureCollection",
     features: [],
   });
   const [selectedParcelId, setSelectedParcelId] = useState<string | null>(null);
+  const [isActionPanelOpen, setIsActionPanelOpen] = useState(false);
   const [focusNonce, setFocusNonce] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,12 +46,25 @@ export function MapPageClient() {
       const listData = await getParcels(ownerFilter ? { owner: ownerFilter } : {});
       const nextParcels = listData ?? [];
       setParcels(nextParcels);
+      const parcelIds = nextParcels.map((parcel) => parcel.parcel_id);
+      const summaries = await getParcelOperationalSummaries(
+        ownerFilter ? { owner: ownerFilter } : {},
+      );
+      setParcelSummaries(summaries);
+      setComments(await getCommentsByParcelIds(parcelIds));
 
       if (ownerFilter) {
         const geojson = await getParcelsGeoJSON({ owner: ownerFilter });
-        setFeatureCollection(geojson);
+        setFeatureCollection(
+          enrichFeatureCollectionWithOperationalStatus(geojson, summaries),
+        );
       } else {
-        setFeatureCollection(parcelsToFeatureCollection(nextParcels));
+        setFeatureCollection(
+          enrichFeatureCollectionWithOperationalStatus(
+            parcelsToFeatureCollection(nextParcels),
+            summaries,
+          ),
+        );
       }
 
       setSelectedParcelId((currentSelection) => {
@@ -59,6 +87,8 @@ export function MapPageClient() {
           : "Impossible de charger les parcelles et la carte.",
       );
       setParcels([]);
+      setParcelSummaries({});
+      setComments([]);
       setFeatureCollection({ type: "FeatureCollection", features: [] });
       setSelectedParcelId(null);
     } finally {
@@ -86,9 +116,18 @@ export function MapPageClient() {
     [parcels, selectedParcelId],
   );
 
+  const selectedParcelComments = useMemo(
+    () =>
+      selectedParcelId
+        ? comments.filter((comment) => comment.parcel_id === selectedParcelId)
+        : [],
+    [comments, selectedParcelId],
+  );
+
   const handleSelectFromList = useCallback((parcelId: string) => {
     setSelectedParcelId(parcelId);
     setFocusNonce((value) => value + 1);
+    setIsActionPanelOpen(false);
   }, []);
 
   const handleSelectFromMap = useCallback(
@@ -98,6 +137,7 @@ export function MapPageClient() {
         parcels.find((parcel) => parcel.idu === identifier);
 
       setSelectedParcelId(matchedParcel?.parcel_id ?? identifier);
+      setIsActionPanelOpen(true);
     },
     [parcels],
   );
@@ -109,6 +149,8 @@ export function MapPageClient() {
           owner={owner}
           onOwnerChange={setOwner}
           parcels={sortedParcels}
+          parcelSummaries={parcelSummaries}
+          selectedParcel={selectedParcel}
           selectedParcelId={selectedParcelId}
           onSelectParcel={handleSelectFromList}
           loading={loading}
@@ -129,6 +171,18 @@ export function MapPageClient() {
             focusNonce={focusNonce}
             heightClass="h-full"
           />
+
+          {selectedParcel &&
+          parcelSummaries[selectedParcel.parcel_id] &&
+          isActionPanelOpen ? (
+            <MapActionPanel
+              parcel={selectedParcel}
+              summary={parcelSummaries[selectedParcel.parcel_id]}
+              comments={selectedParcelComments}
+              onClose={() => setIsActionPanelOpen(false)}
+              onSaved={() => loadData(owner)}
+            />
+          ) : null}
         </div>
       </div>
     </div>

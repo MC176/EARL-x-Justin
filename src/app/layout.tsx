@@ -56,6 +56,12 @@ export default function RootLayout({
                 >
                   Carte
                 </Link>
+                <Link
+                  href="/reporting"
+                  className="rounded-full px-3 py-1 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                >
+                  Reporting
+                </Link>
               </nav>
             </div>
           </header>
