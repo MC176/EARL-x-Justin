@@ -2,13 +2,22 @@ import Link from "next/link";
 import { DashboardAlerts } from "@/components/DashboardAlerts";
 import { DashboardRecentActivity } from "@/components/DashboardRecentActivity";
 import { DashboardStats } from "@/components/DashboardStats";
+import { OwnerFilterSelect } from "@/components/OwnerFilterSelect";
 import { ParcelCommentsList } from "@/components/ParcelCommentsList";
 import { ParcelInterventionsList } from "@/components/ParcelInterventionsList";
 import { ParcelReportsList } from "@/components/ParcelReportsList";
+import { getOwnerOptions } from "@/lib/api";
 import { getDashboardData } from "@/lib/operations";
 
-export default async function DashboardPage() {
-  const dashboard = await getDashboardData({ owner: "maxime" });
+interface DashboardPageProps {
+  searchParams: Promise<{ owner?: string }>;
+}
+
+export default async function DashboardPage({ searchParams }: DashboardPageProps) {
+  const { owner } = await searchParams;
+  const ownerFilter = owner ?? "";
+  const owners = await getOwnerOptions();
+  const dashboard = await getDashboardData(ownerFilter ? { owner: ownerFilter } : {});
   const parcelsById = dashboard.parcels.reduce<Record<string, (typeof dashboard.parcels)[number]>>(
     (accumulator, parcel) => {
       accumulator[parcel.parcel_id] = parcel;
@@ -28,6 +37,19 @@ export default async function DashboardPage() {
             <p className="mt-1 text-base text-slate-500">
               Vue terrain rapide pour suivre les parcelles, alertes et actions du jour.
             </p>
+          </div>
+
+          <div className="w-full sm:w-64">
+            <label className="block text-xs font-medium uppercase tracking-wide text-slate-500">
+              Exploitant
+            </label>
+            <OwnerFilterSelect
+              value={ownerFilter}
+              options={owners.map((o) => ({
+                value: o.owner_code,
+                label: o.owner_name,
+              }))}
+            />
           </div>
         </div>
 

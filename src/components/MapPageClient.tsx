@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   enrichFeatureCollectionWithOperationalStatus,
+  getOwnerOptions,
   getParcels,
   getParcelsGeoJSON,
   parcelsToFeatureCollection,
@@ -19,11 +20,14 @@ import type {
 } from "@/types/operations";
 import { MapActionPanel } from "./MapActionPanel";
 import { ParcelMap } from "./ParcelMap";
-import { ParcelMapSidebar } from "./ParcelMapSidebar";
+import { ParcelMapSidebar, type OwnerOption } from "./ParcelMapSidebar";
 
 export function MapPageClient() {
   const mapSectionRef = useRef<HTMLDivElement | null>(null);
-  const [owner, setOwner] = useState<string>("maxime");
+  const [owner, setOwner] = useState<string>("");
+  const [ownerOptions, setOwnerOptions] = useState<OwnerOption[]>([
+    { value: "", label: "Tous" },
+  ]);
   const [parcels, setParcels] = useState<Parcel[]>([]);
   const [parcelSummaries, setParcelSummaries] = useState<
     Record<string, ParcelOperationalSummary>
@@ -44,6 +48,14 @@ export function MapPageClient() {
     setError(null);
 
     try {
+      if (ownerOptions.length <= 1) {
+        const owners = await getOwnerOptions();
+        setOwnerOptions([
+          { value: "", label: "Tous" },
+          ...owners.map((o) => ({ value: o.owner_code, label: o.owner_name })),
+        ]);
+      }
+
       const listData = await getParcels(ownerFilter ? { owner: ownerFilter } : {});
       const nextParcels = listData ?? [];
       setParcels(nextParcels);
@@ -95,7 +107,7 @@ export function MapPageClient() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [ownerOptions.length]);
 
   useEffect(() => {
     loadData(owner);
@@ -163,6 +175,7 @@ export function MapPageClient() {
         <ParcelMapSidebar
           owner={owner}
           onOwnerChange={setOwner}
+          ownerOptions={ownerOptions}
           parcels={sortedParcels}
           parcelSummaries={parcelSummaries}
           selectedParcel={selectedParcel}

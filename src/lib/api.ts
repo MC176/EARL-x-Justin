@@ -8,6 +8,37 @@ export interface ParcelsGeoJSON {
   bbox?: [number, number, number, number];
 }
 
+export interface OwnerOption {
+  owner_code: string;
+  owner_name: string;
+}
+
+export async function getOwnerOptions(): Promise<OwnerOption[]> {
+  const { data, error } = await supabase
+    .from("parcels")
+    .select("owner_code, owner_name")
+    .not("owner_code", "is", null)
+    .not("owner_name", "is", null);
+
+  if (error) {
+    throw new Error(`Erreur Supabase (owner options): ${error.message}`);
+  }
+
+  const unique = new Map<string, OwnerOption>();
+  for (const row of (data ?? []) as Array<Partial<OwnerOption>>) {
+    const code = row.owner_code?.trim();
+    const name = row.owner_name?.trim();
+    if (!code || !name) continue;
+    if (!unique.has(code)) {
+      unique.set(code, { owner_code: code, owner_name: name });
+    }
+  }
+
+  return Array.from(unique.values()).sort((a, b) =>
+    a.owner_name.localeCompare(b.owner_name, "fr"),
+  );
+}
+
 export async function getParcels(params?: {
   owner?: string;
 }): Promise<Parcel[]> {
@@ -65,9 +96,14 @@ export async function getParcelByIdu(idu: string): Promise<Parcel | null> {
 export async function getParcelsGeoJSON(params?: {
   owner?: string;
 }): Promise<ParcelsGeoJSON> {
-  const owner = params?.owner ?? "maxime";
+  if (!params?.owner) {
+    const parcels = await getParcels();
+    return parcelsToFeatureCollection(parcels);
+  }
 
-  const { data, error } = await supabase.rpc("parcels_geojson", { owner });
+  const { data, error } = await supabase.rpc("parcels_geojson", {
+    owner: params.owner,
+  });
 
   if (error) {
     throw new Error(`Erreur Supabase (parcels_geojson): ${error.message}`);

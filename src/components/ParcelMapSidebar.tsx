@@ -7,15 +7,15 @@ import { getAgronomicStatusMeta } from "@/lib/status";
 import type { Parcel } from "@/types/parcel";
 import type { ParcelOperationalSummary } from "@/types/operations";
 
-const OWNER_OPTIONS = [
-  { value: "", label: "Tous" },
-  { value: "maxime", label: "Maxime" },
-  { value: "jean-marc", label: "Jean-Marc" },
-];
+export interface OwnerOption {
+  value: string;
+  label: string;
+}
 
 interface ParcelMapSidebarProps {
   owner: string;
   onOwnerChange: (owner: string) => void;
+  ownerOptions: OwnerOption[];
   parcels: Parcel[];
   parcelSummaries: Record<string, ParcelOperationalSummary>;
   selectedParcel: Parcel | null;
@@ -27,6 +27,7 @@ interface ParcelMapSidebarProps {
 export function ParcelMapSidebar({
   owner,
   onOwnerChange,
+  ownerOptions,
   parcels,
   parcelSummaries,
   selectedParcel,
@@ -59,8 +60,8 @@ export function ParcelMapSidebar({
           onChange={(e) => onOwnerChange(e.target.value)}
           className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-400"
         >
-          {OWNER_OPTIONS.map((option) => (
-            <option key={option.label} value={option.value}>
+          {ownerOptions.map((option) => (
+            <option key={`${option.value}-${option.label}`} value={option.value}>
               {option.label}
             </option>
           ))}

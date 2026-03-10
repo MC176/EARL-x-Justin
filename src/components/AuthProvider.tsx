@@ -66,16 +66,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let isMounted = true;
 
     async function loadInitialSession() {
-      const {
-        data: { session },
-      } = await supabaseAuth.auth.getSession();
+      try {
+        const {
+          data: { session },
+          error,
+        } = await supabaseAuth.auth.getSession();
 
-      if (!isMounted) return;
+        if (error) {
+          const message = error.message ?? "";
+          if (
+            message.toLowerCase().includes("refresh token") ||
+            message.toLowerCase().includes("invalid refresh token")
+          ) {
+            await supabaseAuth.auth.signOut();
+          }
+        }
 
-      const nextUser = session?.user ?? null;
-      setUser(nextUser);
-      setProfile(await fetchProfile(nextUser));
-      setLoading(false);
+        if (!isMounted) return;
+
+        const nextUser = session?.user ?? null;
+        setUser(nextUser);
+        setProfile(await fetchProfile(nextUser));
+        setLoading(false);
+      } catch {
+        await supabaseAuth.auth.signOut();
+        if (!isMounted) return;
+        setUser(null);
+        setProfile(null);
+        setLoading(false);
+      }
     }
 
     loadInitialSession();
