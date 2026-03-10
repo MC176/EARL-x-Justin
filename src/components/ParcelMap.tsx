@@ -40,6 +40,7 @@ interface ParcelMapProps {
   selectedParcel?: Parcel | null;
   selectedParcelId?: string;
   onSelectParcel?: (parcelId: string) => void;
+  selectedParcelIds?: string[];
   focusNonce?: number;
   heightClass?: string;
 }
@@ -105,6 +106,7 @@ export function ParcelMap({
   selectedParcel,
   selectedParcelId,
   onSelectParcel,
+  selectedParcelIds,
   focusNonce = 0,
   heightClass = "h-[70vh]",
 }: ParcelMapProps) {
@@ -243,22 +245,27 @@ export function ParcelMap({
     if (!map.isStyleLoaded()) return;
 
     if (map.getLayer("parcels-selected")) {
-      const filter: FilterSpecification = selectedParcel
-        ? [
-            "any",
-            ["==", ["get", "parcel_id"], selectedParcel.parcel_id],
-            ["==", ["get", "idu"], selectedParcel.idu],
-          ]
-        : selectedParcelId
-          ? ["==", ["get", "parcel_id"], selectedParcelId]
-          : ["literal", false];
+      let filter: FilterSpecification = ["literal", false];
 
-      map.setFilter(
-        "parcels-selected",
-        filter,
-      );
+      if (selectedParcelIds && selectedParcelIds.length > 0) {
+        filter = [
+          "in",
+          ["get", "parcel_id"],
+          ["literal", selectedParcelIds],
+        ];
+      } else if (selectedParcel) {
+        filter = [
+          "any",
+          ["==", ["get", "parcel_id"], selectedParcel.parcel_id],
+          ["==", ["get", "idu"], selectedParcel.idu],
+        ];
+      } else if (selectedParcelId) {
+        filter = ["==", ["get", "parcel_id"], selectedParcelId];
+      }
+
+      map.setFilter("parcels-selected", filter);
     }
-  }, [selectedParcel, selectedParcelId]);
+  }, [selectedParcel, selectedParcelId, selectedParcelIds]);
 
   useEffect(() => {
     const map = mapRef.current;

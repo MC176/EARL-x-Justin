@@ -19,6 +19,8 @@ import type {
   ParcelOperationalSummary,
 } from "@/types/operations";
 import { MapActionPanel } from "./MapActionPanel";
+import { BulkCommentForm } from "./BulkCommentForm";
+import { MultiParcelActionBar } from "./MultiParcelActionBar";
 import { ParcelMap } from "./ParcelMap";
 import { ParcelMapSidebar, type OwnerOption } from "./ParcelMapSidebar";
 
@@ -38,6 +40,12 @@ export function MapPageClient() {
     features: [],
   });
   const [selectedParcelId, setSelectedParcelId] = useState<string | null>(null);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedParcelIds, setSelectedParcelIds] = useState<string[]>([]);
+  const [bulkDefaultState, setBulkDefaultState] = useState<
+    "in_progress" | "done" | "problem" | null
+  >(null);
+  const [isBulkFormOpen, setIsBulkFormOpen] = useState(false);
   const [isActionPanelOpen, setIsActionPanelOpen] = useState(false);
   const [focusNonce, setFocusNonce] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -104,6 +112,7 @@ export function MapPageClient() {
       setComments([]);
       setFeatureCollection({ type: "FeatureCollection", features: [] });
       setSelectedParcelId(null);
+      setSelectedParcelIds([]);
     } finally {
       setLoading(false);
     }
@@ -150,12 +159,54 @@ export function MapPageClient() {
     });
   }, []);
 
-  const handleSelectFromList = useCallback((parcelId: string) => {
-    setSelectedParcelId(parcelId);
-    setFocusNonce((value) => value + 1);
+  const handleSelectFromList = useCallback(
+    (parcelId: string) => {
+      if (selectionMode) {
+        setSelectedParcelIds((current) => {
+          const set = new Set(current);
+          if (set.has(parcelId)) {
+            set.delete(parcelId);
+          } else {
+            set.add(parcelId);
+          }
+          return Array.from(set);
+        });
+      } else {
+        setSelectedParcelId(parcelId);
+        setFocusNonce((value) => value + 1);
+        setIsActionPanelOpen(false);
+        focusMapOnMobile();
+      }
+    },
+    [selectionMode, focusMapOnMobile],
+  );
+
+  const handleToggleParcelSelection = useCallback((parcelId: string) => {
+    setSelectedParcelIds((current) => {
+      const set = new Set(current);
+      if (set.has(parcelId)) {
+        set.delete(parcelId);
+      } else {
+        set.add(parcelId);
+      }
+      return Array.from(set);
+    });
+  }, []);
+
+  const handleClearSelection = useCallback(() => {
+    setSelectedParcelIds([]);
+  }, []);
+
+  const handleToggleSelectionMode = useCallback(() => {
+    setSelectionMode((current) => {
+      const next = !current;
+      if (!next) {
+        setSelectedParcelIds([]);
+      }
+      return next;
+    });
     setIsActionPanelOpen(false);
-    focusMapOnMobile();
-  }, [focusMapOnMobile]);
+  }, []);
 
   const handleSelectFromMap = useCallback(
     (identifier: string) => {
@@ -163,11 +214,48 @@ export function MapPageClient() {
         parcels.find((parcel) => parcel.parcel_id === identifier) ??
         parcels.find((parcel) => parcel.idu === identifier);
 
-      setSelectedParcelId(matchedParcel?.parcel_id ?? identifier);
-      setIsActionPanelOpen(true);
+      const parcelId = matchedParcel?.parcel_id ?? identifier;
+
+      if (selectionMode) {
+        setSelectedParcelIds((current) => {
+          const set = new Set(current);
+          if (set.has(parcelId)) {
+            set.delete(parcelId);
+          } else {
+            set.add(parcelId);
+          }
+          return Array.from(set);
+        });
+      } else {
+        setSelectedParcelId(parcelId);
+        setIsActionPanelOpen(true);
+      }
     },
-    [parcels],
+    [parcels, selectionMode],
   );
+
+  const selectedParcelsForBulk = useMemo(
+    () =>
+      parcels.filter((parcel) => selectedParcelIds.includes(parcel.parcel_id)),
+    [parcels, selectedParcelIds],
+  );
+
+  const handleOpenBulkForm = useCallback(
+    (defaultState?: "in_progress" | "done" | "problem") => {
+      if (selectedParcelsForBulk.length === 0) {
+        return;
+      }
+      setBulkDefaultState(defaultState ?? "in_progress");
+      setIsBulkFormOpen(true);
+      setIsActionPanelOpen(false);
+    },
+    [selectedParcelsForBulk.length],
+  );
+
+  const handleBulkSubmitted = useCallback(async () => {
+    setSelectedParcelIds([]);
+    await loadData(owner);
+  }, [loadData, owner]);
 
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -181,6 +269,11 @@ export function MapPageClient() {
           selectedParcel={selectedParcel}
           selectedParcelId={selectedParcelId}
           onSelectParcel={handleSelectFromList}
+          selectionMode={selectionMode}
+          selectedParcelIds={selectedParcelIds}
+          onToggleSelectionMode={handleToggleSelectionMode}
+          onToggleParcelSelection={handleToggleParcelSelection}
+          onClearSelection={handleClearSelection}
           loading={loading}
         />
 
@@ -198,6 +291,7 @@ export function MapPageClient() {
             featureCollection={featureCollection}
             selectedParcel={selectedParcel}
             selectedParcelId={selectedParcelId ?? undefined}
+            selectedParcelIds={selectionMode ? selectedParcelIds : undefined}
             onSelectParcel={handleSelectFromMap}
             focusNonce={focusNonce}
             heightClass="h-full"
@@ -212,6 +306,21 @@ export function MapPageClient() {
               comments={selectedParcelComments}
               onClose={() => setIsActionPanelOpen(false)}
               onSaved={() => loadData(owner)}
+            />
+          ) : null}
+
+          <MultiParcelActionBar
+            selectedCount={selectedParcelIds.length}
+            onOpenBulkComment={handleOpenBulkForm}
+            onClearSelection={handleClearSelection}
+          />
+
+          {isBulkFormOpen && bulkDefaultState && selectedParcelsForBulk.length > 0 ? (
+            <BulkCommentForm
+              parcels={selectedParcelsForBulk}
+              defaultState={bulkDefaultState}
+              onClose={() => setIsBulkFormOpen(false)}
+              onSubmitted={handleBulkSubmitted}
             />
           ) : null}
         </div>

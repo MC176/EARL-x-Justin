@@ -21,6 +21,11 @@ interface ParcelMapSidebarProps {
   selectedParcel: Parcel | null;
   selectedParcelId: string | null;
   onSelectParcel: (parcelId: string) => void;
+  selectionMode: boolean;
+  selectedParcelIds: string[];
+  onToggleSelectionMode: () => void;
+  onToggleParcelSelection: (parcelId: string) => void;
+  onClearSelection: () => void;
   loading?: boolean;
 }
 
@@ -33,6 +38,11 @@ export function ParcelMapSidebar({
   selectedParcel,
   selectedParcelId,
   onSelectParcel,
+  selectionMode,
+  selectedParcelIds,
+  onToggleSelectionMode,
+  onToggleParcelSelection,
+  onClearSelection,
   loading = false,
 }: ParcelMapSidebarProps) {
   const selectedSummary = selectedParcel
@@ -66,6 +76,28 @@ export function ParcelMapSidebar({
             </option>
           ))}
         </select>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={onToggleSelectionMode}
+            className={`inline-flex flex-1 items-center justify-center rounded-full px-3 py-2 text-xs font-semibold ${
+              selectionMode
+                ? "bg-slate-900 text-white"
+                : "border border-slate-200 bg-white text-slate-800"
+            }`}
+          >
+            {selectionMode ? "Mode sélection multiple" : "Sélection multiple"}
+          </button>
+          {selectionMode && selectedParcelIds.length > 0 ? (
+            <button
+              type="button"
+              onClick={onClearSelection}
+              className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600"
+            >
+              Effacer
+            </button>
+          ) : null}
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto lg:max-h-full">
@@ -82,7 +114,9 @@ export function ParcelMapSidebar({
         {!loading ? (
           <ul className="divide-y divide-slate-100">
             {parcels.map((parcel) => {
-              const isSelected = parcel.parcel_id === selectedParcelId;
+              const isSelectedSingle = parcel.parcel_id === selectedParcelId;
+              const isMultiSelected = selectedParcelIds.includes(parcel.parcel_id);
+              const isHighlighted = selectionMode ? isMultiSelected : isSelectedSingle;
               const summary = parcelSummaries[parcel.parcel_id];
               const agronomicStatus = getAgronomicStatusMeta(parcel.status);
 
@@ -93,17 +127,40 @@ export function ParcelMapSidebar({
                     onPointerDown={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      onSelectParcel(parcel.parcel_id);
+                      if (selectionMode) {
+                        onToggleParcelSelection(parcel.parcel_id);
+                      } else {
+                        onSelectParcel(parcel.parcel_id);
+                      }
                     }}
                     onClick={(e) => {
                       e.preventDefault();
-                      onSelectParcel(parcel.parcel_id);
+                      if (selectionMode) {
+                        onToggleParcelSelection(parcel.parcel_id);
+                      } else {
+                        onSelectParcel(parcel.parcel_id);
+                      }
                     }}
                     className={`block w-full px-4 py-3 text-left transition ${
-                      isSelected ? "bg-slate-100 ring-1 ring-inset ring-slate-300" : "hover:bg-slate-50"
+                      isHighlighted
+                        ? "bg-slate-100 ring-1 ring-inset ring-slate-300"
+                        : "hover:bg-slate-50"
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2">
+                      <div className="mr-2 mt-1 flex shrink-0 items-start">
+                        <span
+                          className={`flex h-4 w-4 items-center justify-center rounded border ${
+                            isMultiSelected
+                              ? "border-slate-900 bg-slate-900"
+                              : "border-slate-300 bg-white"
+                          }`}
+                        >
+                          {isMultiSelected ? (
+                            <span className="block h-2 w-2 rounded bg-white" />
+                          ) : null}
+                        </span>
+                      </div>
                       <div className="min-w-0">
                         <div className="truncate text-sm font-medium text-slate-900">
                           {parcel.name || parcel.idu}
